@@ -144,42 +144,51 @@ Thanks for using MariaDB!
 ``` cd vprofile-project/src/main/resources/ ```
 
 * Initialize the database <br>
-``` mysql -u root -p"$DATABASE_PASS" -e "create database accounts"
+``` 
+mysql -u root -p"$DATABASE_PASS" -e "create database accounts"
 mysql -u root -p"$DATABASE_PASS" -e "grant all privileges on accounts.* TO 'admin'@'app01' identified by 'admin123' "
 cd ../../..
 mysql -u root -p"$DATABASE_PASS" accounts < src/main/resources/db_backup.sql
-mysql -u root -p"$DATABASE_PASS" -e "FLUSH PRIVILEGES" ```
+mysql -u root -p"$DATABASE_PASS" -e "FLUSH PRIVILEGES" 
+```
 
 * Log into the database and do a quick verification <br>
-``` mysql -u root -p"$DATABASE_PASS"
+``` 
+mysql -u root -p"$DATABASE_PASS"
 MariaDB [(none)]> show databases;
 MariaDB [(none)]> use accounts;
 MariaDB [(none)]> show tables;
-exit ```
+exit 
+```
 
 * Restart the MariaDb server and logout <br>
 ``` 
 systemctl restart mariadb
-logout ``
+logout
+```
 
 ## Provisioning Memcached
 * Log into the memcached VM <br>
 ``` vagrant ssh mc01 ```
 
 * Swicth to root user and update <br>
-``` sudo -i ``` <br>
-``` yum install update -y ```
+``` 
+sudo -i
+yum install update -y 
+```
 
 * Install the epel release package <br>
 ``` yum install epel-release -y ```
 
 * Install the memcached packaged <br>
-``` yum install memcached -y
+``` yum install memcached -y ```
 
 * Start/enable the memcached service and check the status of service <br>
-``` systemctl start memcached
+``` 
+systemctl start memcached
 systemctl enable memcached
-systemctl status memcache ```
+systemctl status memcache
+```
 
 * Run one more command to ensure memcached can listen on TCP port 11211 and UDP port 11111 <br>
 ``` memcached -p 11211 -U 11111 -u memcached -d ```
@@ -193,35 +202,88 @@ systemctl status memcache ```
 ``` vagrant ssh rmq01 ```
 
 * Swicth to root user and update <br>
-``` sudo -i
-yum install update -y ```
+``` 
+sudo -i
+yum install update -y 
+```
 
 * Install the epel release package <br>
 ``` yum install epel-release -y ```
 
 * Install these dependencies before installing RabbitMQ <br>
-``` yum install wget -y
+``` 
+yum install wget -y
 cd /tmp/
 wget http://packages.erlang-solutions.com/erlang-solutions-2.0-1.noarch.rpm
-sudo rpm -Uvh erlang-solutions-2.0-1.noarch.rpm ```
+sudo rpm -Uvh erlang-solutions-2.0-1.noarch.rpm
+```
 
 * Install RabbitMQ with the command below <br>
-``` curl -s https://packagecloud.io/install/repositories/rabbitmq/rabbitmq-server/script.rpm.sh | sudo bash
-sudo yum install rabbitmq-server -y ```
+``` 
+curl -s https://packagecloud.io/install/repositories/rabbitmq/rabbitmq-server/script.rpm.sh | sudo bash
+sudo yum install rabbitmq-server -y 
+```
 
 * Start/Enable the rabbitmq service and check the status of service <br>
-``` systemctl start rabbitmq-server
+``` 
+systemctl start rabbitmq-server
 systemctl enable rabbitmq-server
-systemctl status rabbitmq-server ```
+systemctl status rabbitmq-server 
+```
 
 * Create a test user with the password test <br>
-``` cd ~
+``` 
+cd ~
 echo "[{rabbit, [{loopback_users, []}]}]." > /etc/rabbitmq/rabbitmq.config
 rabbitmqctl add_user test test
 rabbitmqctl set_user_tags test administrator
-systemctl restart rabbitmq-server ```
+systemctl restart rabbitmq-server 
+```
 
 * Check the rabbitmq status and exit <br>
-``` systemctl status rabbitmq-server
-exit ```
+``` 
+systemctl status rabbitmq-server
+exit 
+```
+
+## Provisioning Tomcat
+* Log into the Tomcat VM <br>
+``` vagrant ssh app01 ```
+
+* Swicth to root user and update <br>
+``` 
+sudo -i
+yum install update -y 
+```
+
+* Install the epel release package <br>
+``` yum install epel-release -y ```
+
+* Install dependencies for the Tomcat server
+```
+yum install java-1.8.0-openjdk -y
+yum install git maven wget -y
+```
+
+* Now we can download Tomcat. First switch to /tmp/ directory
+``` 
+cd /tmp/
+wget https://archive.apache.org/dist/tomcat/tomcat-8/v8.5.37/bin/apache-tomcat-8.5.37.tar.gz
+tar xzvf apache-tomcat-8.5.37.tar.gz
+```
+
+* Add a tomcat user and copy data to tomcat home directory
+``` useradd --home-dir /usr/local/tomcat8 --shell /sbin/nologin tomcat ```
+
+* Copy data to /usr/local/tomcat8 directory which is the home-directory for tomcat user
+```
+cp -r /tmp/apache-tomcat-8.5.37/* /usr/local/tomcat8/
+ls /usr/local/tomcat8
+```
+* Change ownership of all files from the root user to the tomcat user
+```
+ls -l /usr/local/tomcat8/
+chown -R tomcat.tomcat /usr/local/tomcat8
+ls -l /usr/local/tomcat8/
+```
 
