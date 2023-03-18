@@ -57,7 +57,7 @@
  ``` DATABASE_PASS = admin123 ```
  
  * To make the variable permanent, add it /etc/profilr file and update file <br>
- ``` vi /etc/profile ``` <br>
+``` vi /etc/profile ``` <br>
 ``` source /etc/profile ```
 
 * Install the epel-release repository <br>
@@ -134,7 +134,8 @@ Cleaning up...
 All done!  If you've completed all of the above steps, your MariaDB
 installation should now be secure.
 
-Thanks for using MariaDB! ```
+Thanks for using MariaDB! 
+```
 
 * Clone the source code <br>
 ``` git clone -b local-setup https://github.com/devopshydclub/vprofile-project.git ```
@@ -166,8 +167,8 @@ logout ``
 ``` vagrant ssh mc01 ```
 
 * Swicth to root user and update <br>
-``` sudo -i
-yum install update -y ```
+``` sudo -i ``` <br>
+``` yum install update -y ```
 
 * Install the epel release package <br>
 ``` yum install epel-release -y ```
@@ -175,7 +176,7 @@ yum install update -y ```
 * Install the memcached packaged <br>
 ``` yum install memcached -y
 
-* Start/enable the memcached service and check the status of service
+* Start/enable the memcached service and check the status of service <br>
 ``` systemctl start memcached
 systemctl enable memcached
 systemctl status memcache ```
