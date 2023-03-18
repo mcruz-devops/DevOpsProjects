@@ -142,3 +142,85 @@ Thanks for using MariaDB! ```
 * Change directory to the resources directory <br>
 ``` cd vprofile-project/src/main/resources/ ```
 
+* Initialize the database <br>
+``` mysql -u root -p"$DATABASE_PASS" -e "create database accounts"
+mysql -u root -p"$DATABASE_PASS" -e "grant all privileges on accounts.* TO 'admin'@'app01' identified by 'admin123' "
+cd ../../..
+mysql -u root -p"$DATABASE_PASS" accounts < src/main/resources/db_backup.sql
+mysql -u root -p"$DATABASE_PASS" -e "FLUSH PRIVILEGES" ```
+
+* Log into the database and do a quick verification <br>
+``` mysql -u root -p"$DATABASE_PASS"
+MariaDB [(none)]> show databases;
+MariaDB [(none)]> use accounts;
+MariaDB [(none)]> show tables;
+exit ```
+
+* Restart the MariaDb server and logout <br>
+``` 
+systemctl restart mariadb
+logout ``
+
+## Provisioning Memcached
+* Log into the memcached VM <br>
+``` vagrant ssh mc01 ```
+
+* Swicth to root user and update <br>
+``` sudo -i
+yum install update -y ```
+
+* Install the epel release package <br>
+``` yum install epel-release -y ```
+
+* Install the memcached packaged <br>
+``` yum install memcached -y
+
+* Start/enable the memcached service and check the status of service
+``` systemctl start memcached
+systemctl enable memcached
+systemctl status memcache ```
+
+* Run one more command to ensure memcached can listen on TCP port 11211 and UDP port 11111 <br>
+``` memcached -p 11211 -U 11111 -u memcached -d ```
+
+* Validate if it is running on the right port <br>
+``` ss -tunlp | grep 11211 ```
+![image](https://user-images.githubusercontent.com/31238382/226073583-b6761f91-1908-43f0-a4d3-c32645f5a481.png)
+
+## Provisioning RabbitMQ
+* Log into the RabbitMQ VM <br>
+``` vagrant ssh rmq01 ```
+
+* Swicth to root user and update <br>
+``` sudo -i
+yum install update -y ```
+
+* Install the epel release package <br>
+``` yum install epel-release -y ```
+
+* Install these dependencies before installing RabbitMQ <br>
+``` yum install wget -y
+cd /tmp/
+wget http://packages.erlang-solutions.com/erlang-solutions-2.0-1.noarch.rpm
+sudo rpm -Uvh erlang-solutions-2.0-1.noarch.rpm ```
+
+* Install RabbitMQ with the command below <br>
+``` curl -s https://packagecloud.io/install/repositories/rabbitmq/rabbitmq-server/script.rpm.sh | sudo bash
+sudo yum install rabbitmq-server -y ```
+
+* Start/Enable the rabbitmq service and check the status of service <br>
+``` systemctl start rabbitmq-server
+systemctl enable rabbitmq-server
+systemctl status rabbitmq-server ```
+
+* Create a test user with the password test <br>
+``` cd ~
+echo "[{rabbit, [{loopback_users, []}]}]." > /etc/rabbitmq/rabbitmq.config
+rabbitmqctl add_user test test
+rabbitmqctl set_user_tags test administrator
+systemctl restart rabbitmq-server ```
+
+* Check the rabbitmq status and exit <br>
+``` systemctl status rabbitmq-server
+exit ```
+
