@@ -287,3 +287,146 @@ chown -R tomcat.tomcat /usr/local/tomcat8
 ls -l /usr/local/tomcat8/
 ```
 
+* Setup systemd for tomcat, create a file with the code below. After creating this file, we will be able to start tomcat service with systemctl start tomcat and stop tomcat with systemctl stop tomcat commands.
+``` vi /etc/systemd/system/tomcat.service ```
+Content to add tomcat.service file:
+```
+[Unit]
+Description=Tomcat
+After=network.target
+
+[Service]
+User=tomcat
+WorkingDirectory=/usr/local/tomcat8
+Environment=JRE_HOME=/usr/lib/jvm/jre
+Environment=JAVA_HOME=/usr/lib/jvm/jre
+Environment=CATALINA_HOME=/usr/local/tomcat8
+Environment=CATALINE_BASE=/usr/local/tomcat8
+ExecStart=/usr/local/tomcat8/bin/catalina.sh run
+ExecStop=/usr/local/tomcat8/bin/shutdown.sh
+SyslogIdentifier=tomcat-%i
+
+[Install]
+WantedBy=multi-user.target
+```
+
+* Run the command below to effect the changes
+``` systemctl daemon-reload ```
+
+Now we should be able to enable tomcat service. The service name tomcat has to be same as given /etc/systemd/system/tomcat.service directory.
+```
+systemctl enable tomcat
+systemctl start tomcat
+systemctl status tomcat
+```
+
+* Our Tomcat server is active running, now we will build our source code and deploy it to Tomcat server.
+Code Build & Deploy to Tomcat(app01) Server
+Clone the source code on the /tmp directory
+```
+git clone https://github.com/devopshydclub/vprofile-project.git
+ls
+cd vprofile-project/
+```
+
+Before we build our artifact, we need to update our configuration file that will be connect to our backend services db, memcached and rabbitmq service.
+```
+vi src/main/resources/application.properties
+application.properties file: Here we need to make sure the settings are correct. First check DB configuration. Our db server is db01 , and we have admin user with password admin123 as we setup. For memcached service, hostname is mc01 and we validated it is listening on tcp port 11211. Fort rabbitMQ, hostname is rmq01 and we have created user test with pwd test.
+#JDBC Configutation for Database Connection
+jdbc.driverClassName=com.mysql.jdbc.Driver
+jdbc.url=jdbc:mysql://db01:3306/accounts?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull
+jdbc.username=admin
+jdbc.password=admin123
+
+#Memcached Configuration For Active and StandBy Host
+#For Active Host
+memcached.active.host=mc01
+memcached.active.port=11211
+#For StandBy Host
+memcached.standBy.host=127.0.0.2
+memcached.standBy.port=11211
+
+#RabbitMq Configuration
+rabbitmq.address=rmq01
+rabbitmq.port=5672
+rabbitmq.username=test
+rabbitmq.password=test
+```
+
+* Run the "mvn install" command which will create our artifact. The artifact will be created /tmp/vprofile-project/target/vprofile-v2.war
+```
+cd target/
+ls
+```
+
+* Deploy the artifact vprofile-v2.war to the Tomcat server. But before that, we will remove default app from our server. For that reason first we will shutdown server. The default app will be in /usr/local/tomcat8/webapps/ROOT directory.
+```
+systemctl stop tomcat
+systemctl status tomcat
+rm -rf /usr/local/tomcat8/webapps/ROOT
+```
+
+* Our artifact is under vprofile-project/target directory. Now we will copy our artifact to /usr/local/tomcat8/webapps/ directory as ROOT.war and start tomcat server. Once we start the server, it will extract our artifact ROOT.war under ROOT directory.
+```
+cd ..
+cp target/vprofile-v2.war /usr/local/tomcat8/webapps/ROOT.war
+systemctl start tomcat
+ls /usr/local/tomcat8/webapps/
+```
+By the time, our application is coming up we can provision our Nginx server.
+
+# Provisioning Nginx
+The Nginx server is Ubuntu, while other servers are RedHat. Install updates with the command below
+```sudo apt update && sudo apt upgrade```
+
+* Install nginx
+```
+sudo -i
+apt install nginx -y
+```
+* Create an Nginx configuration file under directory /etc/nginx/sites-available/ with below content:
+```vi /etc/nginx/sites-available/vproapp```
+Content to add:
+```
+upstream vproapp {
+server app01:8080;
+}
+server {
+listen 80;
+location / {
+proxy_pass http://vproapp;
+}
+}
+```
+
+* Remove the default nginx configuration file
+```rm -rf /etc/nginx/sites-enabled/default```
+
+* After that, create a symbolic link for the configuration file using default config location as below to enable our site. Then restart nginx server.
+```
+ln -s /etc/nginx/sites-available/vproapp /etc/nginx/sites-enabled/vproapp
+systemctl restart nginx
+```
+
+# Validate Application from Browser
+* We are in web01 server, run ifconfig to get its IP address. So the IP address of our web01 is : 192.168.56.11
+![image](https://user-images.githubusercontent.com/31238382/226170246-e3cdf9b6-5185-4416-b7cb-2fb27871668c.png)
+
+* Validate the db connection by logging in with admin_vp as username and password
+![image](https://user-images.githubusercontent.com/31238382/226170352-151d4493-a8fb-4225-9947-ce2393898ab5.png)
+
+* Validate the RabbitMQ connection by clicking RabbitMQ on the page
+![image](https://user-images.githubusercontent.com/31238382/226170384-4269886c-73f7-4011-b16f-3056c184a536.png)
+
+* Validate the Memcached connection
+![image](https://user-images.githubusercontent.com/31238382/226170415-7231a685-6877-46f9-8f79-0b594c2202ca.png)
+
+![image](https://user-images.githubusercontent.com/31238382/226170422-2779a1c1-9c03-45f3-bb96-e55edcb2682c.png)
+
+* After checking that everything works correctly, destroy the VMs using the vagrant destroy command and check your virtualbox manager to confirm the machines are indeed destroyed.
+``` vagrant destroy ```
+![image](https://user-images.githubusercontent.com/31238382/226170467-3cbbb3b1-47ff-46d3-9cc4-fcc40bf6d77d.png)
+
+
+```
