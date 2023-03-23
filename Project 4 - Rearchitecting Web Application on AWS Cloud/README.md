@@ -8,7 +8,7 @@
 • Route 53 domain name <br>
 • ACM certificate
 
-Architecture
+Architecture <br>
 ![image](https://user-images.githubusercontent.com/31238382/227367889-57829851-255d-473b-90ad-4c0085d2d2d3.png)
 
 # Tasks
