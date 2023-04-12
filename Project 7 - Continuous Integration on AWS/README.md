@@ -152,5 +152,6 @@ object name: pipeline-artifact
 • Check your S3 bucket to see if the artifacts are there
 ![image](https://user-images.githubusercontent.com/31238382/231558920-65b371de-6ed7-453d-89da-07ff80242f0a.png)
 
-### Validate Pipeline
+### Cleanup
+• Delete the AWS resources you created
 
