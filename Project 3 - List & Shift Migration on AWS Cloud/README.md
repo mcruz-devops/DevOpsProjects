@@ -1,4 +1,4 @@
-# Project 3 - List & Shift Migration on AWS Cloud
+# Project 3 - Lift & Shift Migration on AWS Cloud
 
 ## Prerequisites:
 • AWS Account <br>
